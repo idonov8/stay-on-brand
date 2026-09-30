@@ -8,6 +8,7 @@ const dropZone = document.querySelector('#drop-zone');
 const results = document.querySelector('#results');
 const status = document.querySelector('#status');
 let sourceImage = null;
+const blobs = {};
 
 function storedColors() {
   try {
@@ -74,6 +75,8 @@ function render(image) {
     canvas.width = source.width;
     canvas.height = source.height;
     canvas.getContext('2d').putImageData(output, 0, 0);
+    // Encode up front so share and clipboard calls stay inside the tap's user gesture on iOS.
+    blobs[canvas.id] = new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   });
   results.hidden = false;
 }
@@ -122,11 +125,42 @@ document.querySelector('#change-image').addEventListener('click', () => fileInpu
 }));
 dropZone.addEventListener('drop', (event) => loadFile(event.dataTransfer.files[0]));
 
-document.querySelectorAll('.download').forEach((button, index) => button.addEventListener('click', () => {
+document.querySelectorAll('.download').forEach((button, index) => button.addEventListener('click', async () => {
+  const blob = await blobs[button.dataset.canvas];
+  const file = new File([blob], `stay-on-brand-${index + 1}.png`, { type: 'image/png' });
+
+  // iOS ignores the download attribute, so hand the file to the share sheet ("Save Image").
+  if (matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+    }
+  }
+
   const link = document.createElement('a');
-  link.download = `stay-on-brand-${index + 1}.png`;
-  link.href = document.querySelector(`#${button.dataset.canvas}`).toDataURL('image/png');
+  link.download = file.name;
+  link.href = URL.createObjectURL(file);
   link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 10000);
 }));
+
+document.querySelectorAll('.copy').forEach((button) => {
+  if (!window.ClipboardItem || !navigator.clipboard?.write) {
+    button.hidden = true;
+    return;
+  }
+  button.addEventListener('click', async () => {
+    try {
+      // Safari needs the ClipboardItem created synchronously in the gesture, with the blob as a promise.
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobs[button.dataset.canvas] })]);
+      button.textContent = 'Copied!';
+    } catch {
+      button.textContent = 'Copy failed';
+    }
+    setTimeout(() => { button.textContent = 'Copy'; }, 1600);
+  });
+});
 
 console.assert(JSON.stringify(hexToRgb('#f5a623')) === '[245,166,35]');
