@@ -189,7 +189,8 @@ canvas { display: block; max-width: 100%; max-height: min(62vh, 620px); object-f
 
 .download:hover { filter: brightness(1.08); }
 .actions { display: flex; gap: 8px; }
-.copy {
+.copy,
+.share {
   padding: 11px 15px;
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -200,7 +201,8 @@ canvas { display: block; max-width: 100%; max-height: min(62vh, 620px); object-f
   cursor: pointer;
 }
 
-.copy:hover { background: rgba(255, 255, 255, 0.06); }
+.copy:hover,
+.share:hover { background: rgba(255, 255, 255, 0.06); }
 footer { padding: 22px 0 36px; border-top: 1px solid var(--line); }
 footer a { color: inherit; text-underline-offset: 3px; }
 footer a:hover { color: var(--paper); }
@@ -220,7 +222,7 @@ footer a:hover { color: var(--paper); }
   .results-heading { flex-direction: column; }
   .output-footer { flex-direction: column; }
   .actions { width: 100%; }
-  .copy, .download { flex: 1; }
+  .copy, .share, .download { flex: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

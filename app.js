@@ -163,4 +163,17 @@ document.querySelectorAll('.copy').forEach((button) => {
   });
 });
 
+document.querySelectorAll('.share').forEach((button, index) => {
+  if (!navigator.canShare?.({ files: [new File([''], 'test.png', { type: 'image/png' })] })) {
+    button.hidden = true;
+    return;
+  }
+  button.addEventListener('click', async () => {
+    const blob = await blobs[button.dataset.canvas];
+    try {
+      await navigator.share({ files: [new File([blob], `stay-on-brand-${index + 1}.png`, { type: 'image/png' })] });
+    } catch {}
+  });
+});
+
 console.assert(JSON.stringify(hexToRgb('#f5a623')) === '[245,166,35]');
